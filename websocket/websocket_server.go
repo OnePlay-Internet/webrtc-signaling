@@ -77,7 +77,10 @@ var upgrader = websocket.Upgrader{
 func echo(w http.ResponseWriter, r *http.Request) {
 	var tenant WebsocketTenant
 	c, err := upgrader.Upgrade(w, r, nil)
-	defer c.Close()
+	defer func(){
+		tenant.exited = true;
+		c.Close()
+	} ();
 	if err == nil {
 		token := strings.Split(r.URL.RawQuery, "=")[1]
 		tenant.exited = false
@@ -98,7 +101,7 @@ func echo(w http.ResponseWriter, r *http.Request) {
 }
 
 func InitSignallingWs(conf *protocol.SignalingConfig) *WebSocketServer {
-	http.HandleFunc("/", echo)
+	http.HandleFunc("/ws", echo)
 	go http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", conf.WebsocketPort), nil)
 	return &wsserver
 }

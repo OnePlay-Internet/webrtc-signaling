@@ -34,8 +34,12 @@ func ProcessReq(req *packet.UserRequest)*packet.UserResponse  {
 
 	var res packet.UserResponse; 
 	res.Data = req.Data
-	if req.Target == "ICE" || req.Target == "SDP" {
+	if req.Target == "ICE" || req.Target == "SDP" || req.Target == "START"{
+		fmt.Printf("forwarding %s packet\n",req.Target);
 		res.Data["Target"] = req.Target;
+	} else {
+		fmt.Printf("unknown %s packet\n",req.Target);
+		return nil;
 	}
 
 	return &res;
@@ -60,8 +64,6 @@ func (wait *WaitingTenant) handle(){
 				wait.stop = true;
 				return;
 			}
-
-			// wait.waiter.Receive();
 		}	
 	}()
 }
@@ -105,6 +107,19 @@ func (pair *Pair) handlePair(){
 	}()
 }
 
+func tokenMatch(a string, b string) bool {
+	if a == "client" && b == "server" {
+		fmt.Printf("match\n");
+		return true;
+	} else if a == "server" && b == "client" {
+		fmt.Printf("match\n");
+		return true;
+	} else {
+		fmt.Printf("unmatch\n");
+		return false;
+	}
+}
+
 func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 	var err error
 	var signaling Signalling
@@ -126,7 +141,7 @@ func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 		var waiter_index int;
 		var waiter *WaitingTenant;
 		for index,wait := range signaling.waitLine{
-			if wait.token == token {
+			if tokenMatch(token,wait.token) {
 				waiter_index = index;
 				waiter = wait;	
 				found = true;
