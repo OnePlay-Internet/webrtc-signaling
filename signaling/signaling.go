@@ -64,6 +64,7 @@ func (wait *WaitingTenant) handle(){
 				wait.stop = true;
 				return;
 			}
+			time.Sleep(time.Millisecond)
 		}	
 	}()
 }
