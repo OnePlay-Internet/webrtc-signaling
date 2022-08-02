@@ -14,5 +14,5 @@ EXPOSE 8088
 #grpc
 EXPOSE 8000
 
-RUN go build
-ENTRYPOINT [ "./signaling" ]
+RUN go build main.go
+ENTRYPOINT [ "./main" ]
