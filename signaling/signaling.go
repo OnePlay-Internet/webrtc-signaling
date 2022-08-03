@@ -105,10 +105,12 @@ func (pair *Pair) handlePair(){
 	}()
 }
 
-func (signaling *Signalling)tokenMatch(token string, tent protocol.Tenant) (client protocol.Tenant, worker protocol.Tenant, found bool){
+// TODO
+func (signaling *Signalling)tokenMatch(token string, tent protocol.Tenant) (client protocol.Tenant, worker protocol.Tenant, found bool, id string){
 	found = true;
 	signaling.mut.Lock()
 	defer func ()  { signaling.mut.Unlock() }()
+	id = "server:client"
 
 	for index,wait := range signaling.waitLine{
 		if index == "client" && token == "server" {
@@ -121,8 +123,10 @@ func (signaling *Signalling)tokenMatch(token string, tent protocol.Tenant) (clie
 			worker = wait.waiter
 			client = tent
 			return;
+		} else if token == index {
+			wait.waiter.Exit()
 		} else {
-			continue
+			continue;
 		}
 	}
 	found = false
@@ -145,7 +149,7 @@ func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 	}
 
 	fun := func (token string, tent protocol.Tenant) error {
-		client, worker, found := signaling.tokenMatch(token,tent);
+		client, worker, found, id := signaling.tokenMatch(token,tent);
 
 		if found {
 			fmt.Printf("new pair")
@@ -153,7 +157,7 @@ func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 				client: client,
 				worker: worker,
 			}
-			signaling.addPair(token,pair)
+			signaling.addPair(id,pair)
 			pair.handlePair()
 
 			pair.worker.Send(&packet.UserResponse{
