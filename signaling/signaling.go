@@ -191,6 +191,7 @@ func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 			signaling.mut.Unlock()
 
 			for _,i := range rev {
+				fmt.Printf("removing pair\n");
 				signaling.removePair(i)
 			}
 			time.Sleep(10*time.Millisecond);
@@ -210,6 +211,7 @@ func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 			signaling.mut.Unlock()
 
 			for _,i := range rev {
+				fmt.Printf("removing tenant from waiting line\n");
 				signaling.removeTenant(i)
 			}
 			time.Sleep(10*time.Millisecond);
