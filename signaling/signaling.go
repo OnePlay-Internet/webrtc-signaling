@@ -6,25 +6,39 @@ import (
 	"time"
 
 	grpc "github.com/pigeatgarlic/signaling/gRPC"
-	"github.com/pigeatgarlic/signaling/websocket"
 	"github.com/pigeatgarlic/signaling/protocol"
+	"github.com/pigeatgarlic/signaling/websocket"
 	"github.com/pigeatgarlic/webrtc-proxy/signalling/gRPC/packet"
 )
 
 
 type Signalling struct {
-	waitLine []*WaitingTenant
-	pairs    []*Pair
+	waitLine map[string]*WaitingTenant
+	pairs    map[string]*Pair
+	mut 	 *sync.Mutex
 	
 	handlers []protocol.ProtocolHandler
-	mut 	 *sync.Mutex
 }
 
-func removePair(slice []*Pair, s int) []*Pair {
-    return append(slice[:s], slice[s+1:]...)
+func (signaling *Signalling)removePair(s string) {
+	signaling.mut.Lock()
+	delete(signaling.pairs,s)
+	signaling.mut.Unlock()
 }
-func removeTenant(slice []*WaitingTenant, s int) []*WaitingTenant{
-    return append(slice[:s], slice[s+1:]...)
+func (signaling *Signalling)removeTenant(s string) {
+	signaling.mut.Lock()
+	delete(signaling.waitLine,s)
+	signaling.mut.Unlock()
+}
+func (signaling *Signalling)addPair(s string, tenant *Pair) {
+	signaling.mut.Lock()
+	signaling.pairs[s] = tenant;
+	signaling.mut.Unlock()
+}
+func (signaling *Signalling)addTenant(s string, tenant *WaitingTenant) {
+	signaling.mut.Lock()
+	signaling.waitLine[s] = tenant;
+	signaling.mut.Unlock()
 }
 
 func ProcessReq(req *packet.UserRequest)*packet.UserResponse  {
@@ -48,20 +62,13 @@ func ProcessReq(req *packet.UserRequest)*packet.UserResponse  {
 
 
 type WaitingTenant struct {
-	stop bool
-	token string
 	waiter protocol.Tenant
 }
 
 func (wait *WaitingTenant) handle(){
 	go func() {
 		for { 
-			if wait.stop {
-				return;	
-			}	
-
 			if wait.waiter.IsExited() {
-				wait.stop = true;
 				return;
 			}
 			time.Sleep(time.Millisecond)
@@ -70,8 +77,6 @@ func (wait *WaitingTenant) handle(){
 }
 
 type Pair struct {
-	Id     string
-	stop   bool
 	client protocol.Tenant
 	worker protocol.Tenant
 }
@@ -79,7 +84,7 @@ type Pair struct {
 func (pair *Pair) handlePair(){
 	go func ()  {
 		for {
-			if pair.stop {
+			if pair.client.IsExited() || pair.worker.IsExited(){
 				return;	
 			}
 			dat := pair.worker.Receive()	
@@ -90,7 +95,7 @@ func (pair *Pair) handlePair(){
 
 	go func ()  {
 		for {
-			if pair.stop {
+			if pair.client.IsExited() || pair.worker.IsExited(){
 				return;	
 			}
 			dat := pair.client.Receive()	
@@ -98,35 +103,36 @@ func (pair *Pair) handlePair(){
 			time.Sleep(time.Millisecond)
 		}	
 	}()
-	go func ()  {
-		for {
-			time.Sleep(10*time.Millisecond);
-			if pair.client.IsExited() || pair.worker.IsExited() {
-				pair.stop = true;	
-			}
-		}	
-	}()
 }
 
-func tokenMatch(a string, b string) bool {
-	if a == "client" && b == "server" {
-		fmt.Printf("match\n");
-		return true;
-	} else if a == "server" && b == "client" {
-		fmt.Printf("match\n");
-		return true;
-	} else {
-		fmt.Printf("unmatch\n");
-		return false;
+func (signaling *Signalling)tokenMatch(token string, tent protocol.Tenant) (client protocol.Tenant, worker protocol.Tenant, err error){
+	signaling.mut.Lock()
+	for index,wait := range signaling.waitLine{
+		if index == "client" && token == "server" {
+			fmt.Printf("match\n");
+			client = wait.waiter
+			worker = tent
+			return;
+		} else if token == "server" && index == "client" {
+			fmt.Printf("match\n");
+			worker = wait.waiter
+			client = tent
+			return;
+		} else {
+			continue
+		}
 	}
+	signaling.mut.Unlock()
+	err = fmt.Errorf("no match peer")
+	return
 }
 
 func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 	var err error
 	var signaling Signalling
 	signaling.handlers = make([]protocol.ProtocolHandler, 2)
-	signaling.pairs = make([]*Pair, 0)
-	signaling.waitLine = make([]*WaitingTenant, 0)
+	signaling.pairs    = make(map[string]*Pair)
+	signaling.waitLine = make(map[string]*WaitingTenant)
 	signaling.mut = &sync.Mutex{}
 
 	signaling.handlers[0] = grpc.InitSignallingServer(conf);
@@ -137,80 +143,71 @@ func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 	}
 
 	fun := func (token string, tent protocol.Tenant) error {
-		signaling.mut.Lock()
-		var found bool;
-		var waiter_index int;
-		var waiter *WaitingTenant;
-		for index,wait := range signaling.waitLine{
-			if tokenMatch(token,wait.token) {
-				waiter_index = index;
-				waiter = wait;	
-				found = true;
+		client, worker, err := signaling.tokenMatch(token,tent);
+
+		if err != nil{
+			pair := &Pair{
+				client: client,
+				worker: worker,
 			}
-		}
+			signaling.addPair(token,pair)
+			pair.handlePair()
 
-
-		if found{
-			waiter.waiter.Send(&packet.UserResponse{
+			pair.worker.Send(&packet.UserResponse{
 				Id: 0,	
 				Error: "",
 				Data: map[string]string{
 					"Target": "START",
 				},
 			})
-
-			waiter.stop = true;
-			signaling.waitLine = removeTenant(signaling.waitLine,waiter_index);
-			pair := &Pair{
-				Id: token,
-				client: waiter.waiter,
-				worker: tent,
-			}
-			signaling.pairs = append(signaling.pairs, pair)	
-			pair.handlePair()
 		} else {
 			wait := &WaitingTenant{
-				stop: false,
-				token: token,
 				waiter: tent,
 			};
-			signaling.waitLine = append(signaling.waitLine, wait)
+			signaling.addTenant(token,wait)
 			wait.handle()
 		}
-		signaling.mut.Unlock()
 		return nil;
 	};
 
 	go func() {
 		for {
+			var rev []string;
+			
 			signaling.mut.Lock()
-			var rev []int;
 			for index, pair := range signaling.pairs{
-				if pair.stop {
+				if  pair.client.IsExited(){
+					pair.worker.Exit()
+					rev = append(rev, index);	
+				} else if pair.worker.IsExited(){
+					pair.client.Exit()
 					rev = append(rev, index);	
 				}
 			}
-			for i := range rev {
-				signaling.pairs = removePair(signaling.pairs,i);
-			}
 			signaling.mut.Unlock()
+
+			for _,i := range rev {
+				signaling.removePair(i)
+			}
 			time.Sleep(10*time.Millisecond);
 		}	
 	}()
 
 	go func() {
 		for {
+			var rev []string;
+
 			signaling.mut.Lock()
-			var rev []int;
 			for index, wait := range signaling.waitLine{
-				if wait.stop {
-					rev = append(rev, index);
+				if wait.waiter.IsExited() {
+					rev = append(rev, index);	
 				}
 			}
-			for _,i := range rev {
-				signaling.waitLine = removeTenant(signaling.waitLine,i)
-			}
 			signaling.mut.Unlock()
+
+			for _,i := range rev {
+				signaling.removeTenant(i)
+			}
 			time.Sleep(10*time.Millisecond);
 		}	
 	}()

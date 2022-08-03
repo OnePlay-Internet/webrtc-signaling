@@ -32,14 +32,14 @@ func (tenant *GrpcTenant) Send(pkt *packet.UserResponse) {
 	}
 	err := tenant.client.Send(pkt)
 	if err != nil {
-		tenant.exited = true
+		tenant.Exit()
 	}
 }
 
 func (tenant *GrpcTenant) Receive() *packet.UserRequest {
 	req, err := tenant.client.Recv()
 	if err != nil {
-		tenant.exited = true
+		tenant.Exit()
 		return nil
 	} else {
 		return req
@@ -83,11 +83,11 @@ func (server *GrpcServer) StreamRequest(client packet.StreamService_StreamReques
 		}
 		err := server.fun(token[0], tenant)
 		if err != nil {
-			tenant.exited = true
+			tenant.Exit()
 		}
 	}
 	for {
-		if tenant.exited {
+		if tenant.IsExited() {
 			return nil
 		}
 		time.Sleep(time.Millisecond)

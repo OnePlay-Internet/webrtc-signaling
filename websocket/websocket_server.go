@@ -37,19 +37,19 @@ func (tenant *WebsocketTenant) Send(pkt *packet.UserResponse) {
 	}
 	err = tenant.conn.WriteMessage(websocket.TextMessage, data)
 	if err != nil {
-		tenant.exited = true
+		tenant.Exit()
 	}
 }
 
 func (tenant *WebsocketTenant) Receive() *packet.UserRequest {
 	msgt, data, err := tenant.conn.ReadMessage()
 	if err != nil {
-		tenant.exited = true
+		tenant.Exit()
 		return nil
 	}
 	switch msgt {
 	case websocket.CloseMessage:
-		tenant.exited = true
+		tenant.Exit()
 		return nil
 	case websocket.TextMessage:
 	}
@@ -62,8 +62,10 @@ func (tenant *WebsocketTenant) Receive() *packet.UserRequest {
 	return &req
 }
 
-func (tenant *WebsocketTenant) Exit() {
-	tenant.exited = true
+func (tenant *WebsocketTenant) Exit(){
+	fmt.Printf("websocket tenant closed\n");
+	tenant.conn.Close();
+	tenant.exited = true;
 }
 
 func (tenant *WebsocketTenant) IsExited() bool {
@@ -75,17 +77,18 @@ var upgrader = websocket.Upgrader{
 } // use default options
 
 func echo(w http.ResponseWriter, r *http.Request) {
-	var tenant WebsocketTenant
+	var tenant *WebsocketTenant
 	c, err := upgrader.Upgrade(w, r, nil)
-	defer func(){
-		tenant.exited = true;
-		c.Close()
-	} ();
 	if err == nil {
 		token := strings.Split(r.URL.RawQuery, "=")[1]
-		tenant.exited = false
-		tenant.conn = c
-		wsserver.fun(token, &tenant)
+		tenant = &WebsocketTenant{
+			exited: false,
+			conn: c,
+		}
+		err := wsserver.fun(token, tenant)
+		if err != nil {
+			tenant.Exit()
+		}
 	}else {
 		fmt.Printf("%s\n",err.Error());
 	}
@@ -93,10 +96,10 @@ func echo(w http.ResponseWriter, r *http.Request) {
 
 
 	for {
-		if tenant.exited {
+		if tenant.IsExited() {
 			return
 		}
-		time.Sleep(time.Millisecond)
+		time.Sleep(10* time.Millisecond)
 	}
 }
 
