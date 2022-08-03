@@ -145,7 +145,7 @@ func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 	fun := func (token string, tent protocol.Tenant) error {
 		client, worker, err := signaling.tokenMatch(token,tent);
 
-		if err != nil{
+		if err == nil{
 			pair := &Pair{
 				client: client,
 				worker: worker,
