@@ -202,6 +202,20 @@ func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 		}	
 	}()
 
+		go func() {
+		for {
+			signaling.mut.Lock()
+			for i,_ := range signaling.pairs {
+				fmt.Printf("pair, holding id %s\n",i);	
+			}
+			for i,_ := range signaling.waitLine {
+				fmt.Printf("tenant in waiting line, holding token %s\n",i);	
+			}
+			signaling.mut.Unlock()
+			time.Sleep(10*time.Second);
+		}	
+	}()
+
 	go func() {
 		for {
 			var rev []string;
