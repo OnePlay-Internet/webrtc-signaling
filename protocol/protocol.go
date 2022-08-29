@@ -18,4 +18,5 @@ type ProtocolHandler interface {
 type SignalingConfig struct {
 	WebsocketPort int
 	GrpcPort      int
+	ValidationUrl string
 }

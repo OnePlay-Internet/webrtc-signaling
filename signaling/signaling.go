@@ -7,6 +7,8 @@ import (
 
 	grpc "github.com/pigeatgarlic/signaling/gRPC"
 	"github.com/pigeatgarlic/signaling/protocol"
+	"github.com/pigeatgarlic/signaling/validator"
+	"github.com/pigeatgarlic/signaling/validator/oneplay"
 	"github.com/pigeatgarlic/signaling/websocket"
 	"github.com/pigeatgarlic/webrtc-proxy/signalling/gRPC/packet"
 )
@@ -18,6 +20,7 @@ type Signalling struct {
 	mut 	 *sync.Mutex
 	
 	handlers []protocol.ProtocolHandler
+	validator validator.Validator
 }
 
 func (signaling *Signalling)removePair(s string) {
@@ -110,15 +113,16 @@ func (signaling *Signalling)tokenMatch(token string, tent protocol.Tenant) (clie
 	found = true;
 	signaling.mut.Lock()
 	defer func ()  { signaling.mut.Unlock() }()
-	id = "server:client"
+
+	result := signaling.validator.Validate(token);
 
 	for index,wait := range signaling.waitLine{
-		if index == "client" && token == "server" {
+		if index == result.ClientToken && token == result.ServerToken {
 			fmt.Printf("match\n");
 			client = wait.waiter
 			worker = tent
 			return;
-		} else if token == "client" && index == "server" {
+		} else if token == result.ClientToken && index == result.ServerToken {
 			fmt.Printf("match\n");
 			worker = wait.waiter
 			client = tent
@@ -134,7 +138,6 @@ func (signaling *Signalling)tokenMatch(token string, tent protocol.Tenant) (clie
 }
 
 func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
-	var err error
 	var signaling Signalling
 	signaling.handlers = make([]protocol.ProtocolHandler, 2)
 	signaling.pairs    = make(map[string]*Pair)
@@ -143,10 +146,7 @@ func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 
 	signaling.handlers[0] = grpc.InitSignallingServer(conf);
 	signaling.handlers[1] = ws.InitSignallingWs(conf);
-	if err != nil  {
-		fmt.Printf("%s\n",err.Error())
-		return nil;
-	}
+	signaling.validator = oneplay.NewOneplayValidator(conf.ValidationUrl)
 
 	fun := func (token string, tent protocol.Tenant) error {
 		client, worker, found, id := signaling.tokenMatch(token,tent);

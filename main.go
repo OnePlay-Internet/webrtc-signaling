@@ -10,6 +10,7 @@ func main() {
 	signalling.InitSignallingServer(&protocol.SignalingConfig{
 		WebsocketPort: 8088,
 		GrpcPort:      8000,
+		ValidationUrl: "https://auth.thinkmay.net/auth/validate",
 	})
 	shutdown <- true
 }
