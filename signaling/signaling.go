@@ -109,12 +109,16 @@ func (pair *Pair) handlePair(){
 }
 
 // TODO
-func (signaling *Signalling)tokenMatch(token string, tent protocol.Tenant) (client protocol.Tenant, worker protocol.Tenant, found bool, id string){
+func (signaling *Signalling)tokenMatch(token string, tent protocol.Tenant) (client protocol.Tenant, worker protocol.Tenant, found bool){
 	found = true;
 	signaling.mut.Lock()
 	defer func ()  { signaling.mut.Unlock() }()
 
 	result := signaling.validator.Validate(token);
+	if result == nil {
+		found = false;
+		return;
+	}
 
 	for index,wait := range signaling.waitLine{
 		if index == result.ClientToken && token == result.ServerToken {
@@ -148,8 +152,9 @@ func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 	signaling.handlers[1] = ws.InitSignallingWs(conf);
 	signaling.validator = oneplay.NewOneplayValidator(conf.ValidationUrl)
 
+	id := 0
 	fun := func (token string, tent protocol.Tenant) error {
-		client, worker, found, id := signaling.tokenMatch(token,tent);
+		client, worker, found := signaling.tokenMatch(token,tent);
 
 		if found {
 			fmt.Printf("new pair\n")
@@ -157,8 +162,9 @@ func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 				client: client,
 				worker: worker,
 			}
-			signaling.addPair(id,pair)
+			signaling.addPair(fmt.Sprint(id),pair)
 			pair.handlePair()
+			id++;
 
 			pair.worker.Send(&packet.UserResponse{
 				Id: 0,	

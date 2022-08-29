@@ -33,7 +33,7 @@ func (val *OneplayValidator) Validate(token string) (result *validator.TokenPair
 		return nil
 	}
 
-	err = json.Unmarshal(data[:n],*result)
+	err = json.Unmarshal(data[:n],result)
 	if err != nil {
 		fmt.Printf("validation failed, %s\n",err.Error());
 		return nil
