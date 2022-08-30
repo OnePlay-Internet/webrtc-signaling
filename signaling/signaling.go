@@ -114,8 +114,13 @@ func (signaling *Signalling)tokenMatch(token string, tent protocol.Tenant) (clie
 	signaling.mut.Lock()
 	defer func ()  { signaling.mut.Unlock() }()
 
-	result := signaling.validator.Validate(token);
-	if result == nil {
+	resultcl,err := signaling.validator.ValidateClient(token);
+	if err == nil {
+		found = false;
+		return;
+	}
+	resultsv,err := signaling.validator.ValidateServer(token);
+	if err == nil {
 		found = false;
 		return;
 	}
