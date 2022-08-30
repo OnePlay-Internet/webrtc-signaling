@@ -1,16 +1,11 @@
 package validator
 
-type ServerResult struct {
-	ID int `json:"id"`
-	ServerID int `json:"clientID"`
-}
-
-type ClientResult struct {
-	ID int `json:"id"`
-	ClientID int `json:"clientID"`
+type ValidationResult struct {
+	ID        int  `json:"id"`
+	IsServer  bool `json:"isServer"`
+	Recipient bool `json:"recipient"`
 }
 
 type Validator interface {
-	ValidateServer(token string) (*ServerResult, error)
-	ValidateClient(token string) (*ClientResult, error)
+	Validate(token string) (*ValidationResult, error)
 }

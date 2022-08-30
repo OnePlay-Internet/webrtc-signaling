@@ -9,7 +9,7 @@ import (
 )
 
 type OneplayValidator struct {
-	url string 
+	url string
 }
 
 func NewOneplayValidator(url string) validator.Validator {
@@ -18,43 +18,22 @@ func NewOneplayValidator(url string) validator.Validator {
 	}
 }
 
-func (val *OneplayValidator) ValidateServer(token string) (result *validator.ServerResult,err error) {
-	result = &validator.ServerResult{}
-	resp,err := http.Get(fmt.Sprintf("%s/%s",val.url,token));
+func (val *OneplayValidator) Validate(token string) (result *validator.ValidationResult, err error) {
+	result = &validator.ValidationResult{}
+	resp, err := http.Get(fmt.Sprintf("%s/%s", val.url, token))
 	if err != nil {
-		return 
+		return
 	}
 
-	data := make([]byte,1000);
-	n, err :=resp.Body.Read(data)
+	data := make([]byte, 1000)
+	n, err := resp.Body.Read(data)
 	if err != nil {
-		return 
+		return
 	}
 
-	err = json.Unmarshal(data[:n],result)
+	err = json.Unmarshal(data[:n], result)
 	if err != nil {
-		fmt.Printf("validation failed, %s\n",err.Error());
-		return 
-	}
-
-	return;
-}
-func (val *OneplayValidator) ValidateClient(token string) (result *validator.ClientResult, err error) {
-	result = &validator.ClientResult{}
-	resp,err := http.Get(fmt.Sprintf("%s/%s",val.url,token));
-	if err != nil {
-		return 
-	}
-
-	data := make([]byte,1000);
-	n, err :=resp.Body.Read(data)
-	if err != nil {
-		return 
-	}
-
-	err = json.Unmarshal(data[:n],result)
-	if err != nil {
-		return 
+		return
 	}
 	return
 }

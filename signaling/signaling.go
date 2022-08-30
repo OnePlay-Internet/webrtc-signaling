@@ -15,30 +15,30 @@ import (
 
 
 type Signalling struct {
-	waitLine map[string]*WaitingTenant
-	pairs    map[string]*Pair
+	waitLine map[validator.ValidationResult]*WaitingTenant
+	pairs    map[int]*Pair
 	mut 	 *sync.Mutex
 	
 	handlers []protocol.ProtocolHandler
 	validator validator.Validator
 }
 
-func (signaling *Signalling)removePair(s string) {
+func (signaling *Signalling)removePair(s int) {
 	signaling.mut.Lock()
 	delete(signaling.pairs,s)
 	signaling.mut.Unlock()
 }
-func (signaling *Signalling)removeTenant(s string) {
+func (signaling *Signalling)removeTenant(s validator.ValidationResult) {
 	signaling.mut.Lock()
 	delete(signaling.waitLine,s)
 	signaling.mut.Unlock()
 }
-func (signaling *Signalling)addPair(s string, tenant *Pair) {
+func (signaling *Signalling)addPair(s int, tenant *Pair) {
 	signaling.mut.Lock()
 	signaling.pairs[s] = tenant;
 	signaling.mut.Unlock()
 }
-func (signaling *Signalling)addTenant(s string, tenant *WaitingTenant) {
+func (signaling *Signalling)addTenant(s validator.ValidationResult, tenant *WaitingTenant) {
 	signaling.mut.Lock()
 	signaling.waitLine[s] = tenant;
 	signaling.mut.Unlock()
@@ -109,35 +109,18 @@ func (pair *Pair) handlePair(){
 }
 
 // TODO
-func (signaling *Signalling)tokenMatch(token string, tent protocol.Tenant) (client protocol.Tenant, worker protocol.Tenant, found bool){
+func (signaling *Signalling)tokenMatch(result validator.ValidationResult, tent protocol.Tenant) (client protocol.Tenant, worker protocol.Tenant, found bool,id int){
 	found = true;
 	signaling.mut.Lock()
 	defer func ()  { signaling.mut.Unlock() }()
 
-	resultcl,err := signaling.validator.ValidateClient(token);
-	if err == nil {
-		found = false;
-		return;
-	}
-	resultsv,err := signaling.validator.ValidateServer(token);
-	if err == nil {
-		found = false;
-		return;
-	}
 
 	for index,wait := range signaling.waitLine{
-		if index == result.ClientToken && token == result.ServerToken {
+		if index.ID == result.ID {
 			fmt.Printf("match\n");
 			client = wait.waiter
 			worker = tent
 			return;
-		} else if token == result.ClientToken && index == result.ServerToken {
-			fmt.Printf("match\n");
-			worker = wait.waiter
-			client = tent
-			return;
-		} else if token == index {
-			wait.waiter.Exit()
 		} else {
 			continue;
 		}
@@ -149,17 +132,21 @@ func (signaling *Signalling)tokenMatch(token string, tent protocol.Tenant) (clie
 func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 	var signaling Signalling
 	signaling.handlers = make([]protocol.ProtocolHandler, 2)
-	signaling.pairs    = make(map[string]*Pair)
-	signaling.waitLine = make(map[string]*WaitingTenant)
+	signaling.pairs    = make(map[int]*Pair)
+	signaling.waitLine = make(map[validator.ValidationResult]*WaitingTenant)
 	signaling.mut = &sync.Mutex{}
 
 	signaling.handlers[0] = grpc.InitSignallingServer(conf);
 	signaling.handlers[1] = ws.InitSignallingWs(conf);
 	signaling.validator = oneplay.NewOneplayValidator(conf.ValidationUrl)
 
-	id := 0
 	fun := func (token string, tent protocol.Tenant) error {
-		client, worker, found := signaling.tokenMatch(token,tent);
+		result,err := signaling.validator.Validate(token);
+		if err != nil {
+			fmt.Printf("validation error %s",err.Error())
+			return err;
+		}
+		client, worker, found, id := signaling.tokenMatch(*result,tent);
 
 		if found {
 			fmt.Printf("new pair\n")
@@ -167,9 +154,8 @@ func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 				client: client,
 				worker: worker,
 			}
-			signaling.addPair(fmt.Sprint(id),pair)
+			signaling.addPair(id,pair)
 			pair.handlePair()
-			id++;
 
 			pair.worker.Send(&packet.UserResponse{
 				Id: 0,	
@@ -183,7 +169,7 @@ func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 			wait := &WaitingTenant{
 				waiter: tent,
 			};
-			signaling.addTenant(token,wait)
+			signaling.addTenant(*result,wait)
 			wait.handle()
 		}
 		return nil;
@@ -191,7 +177,7 @@ func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 
 	go func() {
 		for {
-			var rev []string;
+			var rev []int;
 			
 			signaling.mut.Lock()
 			for index, pair := range signaling.pairs{
@@ -229,7 +215,7 @@ func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 
 	go func() {
 		for {
-			var rev []string;
+			var rev []validator.ValidationResult;
 
 			signaling.mut.Lock()
 			for index, wait := range signaling.waitLine{
