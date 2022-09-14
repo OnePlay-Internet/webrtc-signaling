@@ -116,7 +116,7 @@ func (signaling *Signalling)tokenMatch(result validator.ValidationResult, tent p
 
 
 	for index,wait := range signaling.waitLine{
-		if index.ID == result.ID {
+		if index.ID == result.ID && (result.IsServer == !index.IsServer){
 			fmt.Printf("match\n");
 			client = wait.waiter
 			worker = tent
