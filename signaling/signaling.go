@@ -118,8 +118,13 @@ func (signaling *Signalling)tokenMatch(result validator.ValidationResult, tent p
 	for index,wait := range signaling.waitLine{
 		if index.ID == result.ID && (result.IsServer == !index.IsServer){
 			fmt.Printf("match\n");
-			client = wait.waiter
-			worker = tent
+			if result.IsServer {
+				client = wait.waiter
+				worker = tent
+			} else {
+				worker = wait.waiter
+				client = tent
+			}
 			return;
 		} else {
 			continue;
