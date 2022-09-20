@@ -17,4 +17,4 @@ EXPOSE 8000
 RUN go build main.go
 
 ENV VALIDATION_URL "https://auth.thinkmay.net/auth/validate"
-ENTRYPOINT [ "./main --validationurl ${VALIDATION_URL}" ]
+ENTRYPOINT [ "./main","--validationurl","${VALIDATION_URL}" ]
