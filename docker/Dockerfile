@@ -15,4 +15,6 @@ EXPOSE 8088
 EXPOSE 8000
 
 RUN go build main.go
-ENTRYPOINT [ "./main" ]
+
+ENV VALIDATION_URL "https://auth.thinkmay.net/auth/validate"
+ENTRYPOINT [ "./main --validationurl ${VALIDATION_URL}" ]
