@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	ValidationUrl := "https://auth.thinkmay.net/auth/validate";
+	ValidationUrl := os.Getenv("VALIDATION_URL");
 	WebsocketPort := 8088;
 	GrpcPort :=      8000;
 
