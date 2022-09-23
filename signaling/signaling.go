@@ -8,7 +8,6 @@ import (
 	grpc "github.com/pigeatgarlic/signaling/gRPC"
 	"github.com/pigeatgarlic/signaling/protocol"
 	"github.com/pigeatgarlic/signaling/validator"
-	"github.com/pigeatgarlic/signaling/validator/oneplay"
 	"github.com/pigeatgarlic/signaling/websocket"
 	"github.com/pigeatgarlic/webrtc-proxy/signalling/gRPC/packet"
 )
@@ -134,7 +133,7 @@ func (signaling *Signalling)tokenMatch(result validator.ValidationResult, tent p
 	return
 }
 
-func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
+func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Validator) *Signalling {
 	var signaling Signalling
 	signaling.handlers = make([]protocol.ProtocolHandler, 2)
 	signaling.pairs    = make(map[int]*Pair)
@@ -143,7 +142,7 @@ func InitSignallingServer(conf *protocol.SignalingConfig) *Signalling {
 
 	signaling.handlers[0] = grpc.InitSignallingServer(conf);
 	signaling.handlers[1] = ws.InitSignallingWs(conf);
-	signaling.validator = oneplay.NewOneplayValidator(conf.ValidationUrl)
+	signaling.validator = provider
 
 	fun := func (token string, tent protocol.Tenant) error {
 		result,err := signaling.validator.Validate(token);

@@ -17,4 +17,5 @@ EXPOSE 8000
 RUN go build main.go
 
 ENV VALIDATION_URL "https://auth.thinkmay.net/auth/validate"
+ENV SCHEMA         "oneplay"
 ENTRYPOINT [ "./main" ]
