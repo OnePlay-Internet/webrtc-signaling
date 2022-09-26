@@ -60,7 +60,6 @@ func main() {
 	signalling.InitSignallingServer(&protocol.SignalingConfig{
 		WebsocketPort: WebsocketPort,
 		GrpcPort:      GrpcPort,
-		ValidationUrl: ValidationUrl,
 	}, valid)
 
 	shutdown := make(chan bool)
