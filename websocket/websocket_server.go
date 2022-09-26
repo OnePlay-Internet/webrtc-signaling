@@ -76,7 +76,7 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {return true},
 } // use default options
 
-func echo(w http.ResponseWriter, r *http.Request) {
+func handle(w http.ResponseWriter, r *http.Request) {
 	var tenant *WebsocketTenant
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err == nil {
@@ -104,7 +104,7 @@ func echo(w http.ResponseWriter, r *http.Request) {
 }
 
 func InitSignallingWs(conf *protocol.SignalingConfig) *WebSocketServer {
-	http.HandleFunc("/ws", echo)
+	http.HandleFunc("/handshale", handle)
 	go http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", conf.WebsocketPort), nil)
 	return &wsserver
 }
