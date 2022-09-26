@@ -104,7 +104,7 @@ func handle(w http.ResponseWriter, r *http.Request) {
 }
 
 func InitSignallingWs(conf *protocol.SignalingConfig) *WebSocketServer {
-	http.HandleFunc("/handshale", handle)
+	http.HandleFunc("/handshake", handle)
 	go http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", conf.WebsocketPort), nil)
 	return &wsserver
 }
