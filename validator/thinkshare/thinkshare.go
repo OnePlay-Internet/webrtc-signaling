@@ -36,11 +36,7 @@ func (val *ThinkshareValidator) Validate(token string) (result *validator.Valida
 	}
 
 	data := make([]byte, 1000)
-	n, err := resp.Body.Read(data)
-	if err != nil {
-		return
-	}
-
+	n,_ := resp.Body.Read(data)
 	err = json.Unmarshal(data[:n], result)
 	if err != nil {
 		return

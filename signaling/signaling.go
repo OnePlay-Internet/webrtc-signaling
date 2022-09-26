@@ -147,7 +147,7 @@ func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Val
 	fun := func (token string, tent protocol.Tenant) error {
 		result,err := signaling.validator.Validate(token);
 		if err != nil {
-			fmt.Printf("validation error %s",err.Error())
+			fmt.Printf("validation error %s\n",err.Error())
 			return err;
 		}
 		client, worker, found, id := signaling.tokenMatch(*result,tent);
