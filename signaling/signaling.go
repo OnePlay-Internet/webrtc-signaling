@@ -50,7 +50,7 @@ func ProcessReq(req *packet.UserRequest)*packet.UserResponse  {
 
 	var res packet.UserResponse; 
 	res.Data = req.Data
-	if req.Target == "ICE" || req.Target == "SDP" || req.Target == "START"{
+	if req.Target == "ICE" || req.Target == "SDP" || req.Target == "START" || req.Target == "PREFLIGHT"{
 		fmt.Printf("forwarding %s packet\n",req.Target);
 		res.Data["Target"] = req.Target;
 	} else {
