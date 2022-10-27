@@ -5,11 +5,11 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/pigeatgarlic/signaling/protocol"
-	signalling "github.com/pigeatgarlic/signaling/signaling"
-	"github.com/pigeatgarlic/signaling/validator"
-	"github.com/pigeatgarlic/signaling/validator/oneplay"
-	"github.com/pigeatgarlic/signaling/validator/thinkshare"
+	"github.com/OnePlay-Internet/signaling/protocol"
+	signalling "github.com/OnePlay-Internet/signaling/signaling"
+	"github.com/OnePlay-Internet/signaling/validator"
+	"github.com/OnePlay-Internet/signaling/validator/oneplay"
+	"github.com/OnePlay-Internet/signaling/validator/thinkshare"
 )
 
 func main() {
@@ -47,15 +47,14 @@ func main() {
 		case "thinkshare":
 			return thinkshare.NewThinkshareValidator(ValidationUrl)
 		default:
-			return nil;
+			return nil
 		}
 	}()
 
 	if valid == nil {
-		fmt.Printf("unknown validator\n");
-		return;
+		fmt.Printf("unknown validator\n")
+		return
 	}
-
 
 	signalling.InitSignallingServer(&protocol.SignalingConfig{
 		WebsocketPort: WebsocketPort,

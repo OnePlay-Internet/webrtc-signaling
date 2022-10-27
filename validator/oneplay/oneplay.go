@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/pigeatgarlic/signaling/validator"
+	"github.com/OnePlay-Internet/signaling/validator"
 )
 
 type OneplayValidator struct {

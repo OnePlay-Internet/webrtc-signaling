@@ -5,8 +5,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/pigeatgarlic/signaling/protocol"
-	"github.com/pigeatgarlic/webrtc-proxy/signalling/gRPC/packet"
+	"github.com/OnePlay-Internet/signaling-module/webrtc/go/packet"
+	"github.com/OnePlay-Internet/signaling/protocol"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )

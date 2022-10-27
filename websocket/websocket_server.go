@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/OnePlay-Internet/signaling-module/webrtc/go/packet"
+	"github.com/OnePlay-Internet/signaling/protocol"
 	"github.com/gorilla/websocket"
-	"github.com/pigeatgarlic/signaling/protocol"
-	"github.com/pigeatgarlic/webrtc-proxy/signalling/gRPC/packet"
 )
 
 var wsserver = WebSocketServer{}
@@ -23,8 +23,8 @@ func (server *WebSocketServer) OnTenant(fun protocol.OnTenantFunc) {
 }
 
 type WebsocketTenant struct {
-	exited  bool
-	conn    *websocket.Conn
+	exited bool
+	conn   *websocket.Conn
 }
 
 func (tenant *WebsocketTenant) Send(pkt *packet.UserResponse) {
@@ -62,10 +62,10 @@ func (tenant *WebsocketTenant) Receive() *packet.UserRequest {
 	return &req
 }
 
-func (tenant *WebsocketTenant) Exit(){
-	fmt.Printf("websocket tenant closed\n");
-	tenant.conn.Close();
-	tenant.exited = true;
+func (tenant *WebsocketTenant) Exit() {
+	fmt.Printf("websocket tenant closed\n")
+	tenant.conn.Close()
+	tenant.exited = true
 }
 
 func (tenant *WebsocketTenant) IsExited() bool {
@@ -73,7 +73,7 @@ func (tenant *WebsocketTenant) IsExited() bool {
 }
 
 var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {return true},
+	CheckOrigin: func(r *http.Request) bool { return true },
 } // use default options
 
 func handle(w http.ResponseWriter, r *http.Request) {
@@ -83,23 +83,21 @@ func handle(w http.ResponseWriter, r *http.Request) {
 		token := strings.Split(r.URL.RawQuery, "=")[1]
 		tenant = &WebsocketTenant{
 			exited: false,
-			conn: c,
+			conn:   c,
 		}
 		err := wsserver.fun(token, tenant)
 		if err != nil {
 			tenant.Exit()
 		}
-	}else {
-		fmt.Printf("%s\n",err.Error());
+	} else {
+		fmt.Printf("%s\n", err.Error())
 	}
-
-
 
 	for {
 		if tenant.IsExited() {
 			return
 		}
-		time.Sleep(10* time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/pigeatgarlic/signaling/validator"
+	"github.com/OnePlay-Internet/signaling/validator"
 )
 
 type ThinkshareValidator struct {
@@ -36,7 +36,7 @@ func (val *ThinkshareValidator) Validate(token string) (result *validator.Valida
 	}
 
 	data := make([]byte, 1000)
-	n,_ := resp.Body.Read(data)
+	n, _ := resp.Body.Read(data)
 	err = json.Unmarshal(data[:n], result)
 	if err != nil {
 		return
