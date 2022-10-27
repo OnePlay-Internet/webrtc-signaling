@@ -49,7 +49,7 @@ func ProcessReq(req *packet.UserRequest) *packet.UserResponse {
 
 	var res packet.UserResponse
 	res.Data = req.Data
-	if req.Target == "ICE" || req.Target == "SDP" || req.Target == "START" || req.Target == "PREFLIGHT" || req.Target == "NVCOMPUTER" || req.Target == "SELECTION" || req.Target == "RESPONSE" {
+	if req.Target == "ICE" || req.Target == "SDP" || req.Target == "START" || req.Target == "PREFLIGHT" || req.Target == "SERVERINFOR" || req.Target == "REQUEST" || req.Target == "RESPONSE" {
 		fmt.Printf("forwarding %s packet\n", req.Target)
 		res.Data["Target"] = req.Target
 	} else {
@@ -108,7 +108,15 @@ func (pair *Pair) handlePair() {
 func (signaling *Signalling) tokenMatch(result validator.ValidationResult, tent protocol.Tenant) (client protocol.Tenant, worker protocol.Tenant, found bool, id int) {
 	found = true
 	signaling.mut.Lock()
-	defer func() { signaling.mut.Unlock() }()
+
+	var rmID *validator.ValidationResult;
+	rmID = nil;
+	defer func() { 
+		signaling.mut.Unlock() 
+		if rmID != nil {
+			signaling.removeTenant(*rmID);
+		}
+	}()
 
 	for index, wait := range signaling.waitLine {
 		if index.ID == result.ID && (result.IsServer == !index.IsServer) {
@@ -120,11 +128,13 @@ func (signaling *Signalling) tokenMatch(result validator.ValidationResult, tent 
 				worker = wait.waiter
 				client = tent
 			}
+			rmID = &index
 			return
 		} else {
 			continue
 		}
 	}
+
 	found = false
 	return
 }
@@ -154,6 +164,7 @@ func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Val
 				client: client,
 				worker: worker,
 			}
+
 			signaling.addPair(id, pair)
 			pair.handlePair()
 

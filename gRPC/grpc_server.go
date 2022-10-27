@@ -14,11 +14,24 @@ import (
 type GrpcServer struct {
 	packet.UnimplementedStreamServiceServer
 	grpcServer *grpc.Server
-	fun        protocol.OnTenantFunc
+	line 		chan *tenantinqueue
+}
+
+type tenantinqueue struct {
+	token string
+	grpctenant *GrpcTenant;	
 }
 
 func (server *GrpcServer) OnTenant(fun protocol.OnTenantFunc) {
-	server.fun = fun
+	go func() {
+		for {
+			ten :=<-server.line
+			err := fun(ten.token,ten.grpctenant);
+			if err != nil {
+				ten.grpctenant.Exit()
+			}
+		}
+	}()
 }
 
 type GrpcTenant struct {
@@ -60,6 +73,7 @@ func InitSignallingServer(conf *protocol.SignalingConfig) *GrpcServer {
 	if err != nil {
 		panic(err)
 	}
+	ret.line = make(chan *tenantinqueue)
 	ret.grpcServer = grpc.NewServer()
 	packet.RegisterStreamServiceServer(ret.grpcServer, &ret)
 	go ret.grpcServer.Serve(lis)
@@ -81,9 +95,9 @@ func (server *GrpcServer) StreamRequest(client packet.StreamService_StreamReques
 			exited: false,
 			client: client,
 		}
-		err := server.fun(token[0], tenant)
-		if err != nil {
-			tenant.Exit()
+		server.line<- &tenantinqueue{
+			token: token[0],
+			grpctenant: tenant,
 		}
 	}
 	for {
