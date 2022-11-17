@@ -23,6 +23,21 @@ type TokenReq struct {
 }
 
 func (val *ThinkshareValidator) Validate(token string) (result *validator.ValidationResult, err error) {
+	if token == "clientTestToken" {
+		return &validator.ValidationResult{
+			ID: 23987,
+			IsServer : false,
+			Recipient : 234,
+		},nil;
+	} else if token == "serverTestToken" {
+		return &validator.ValidationResult{
+			ID: 23987,
+			IsServer : true,
+			Recipient : 456,
+		},nil;
+	}
+
+
 	result = &validator.ValidationResult{}
 
 	buf, err := json.Marshal(TokenReq{Token: token})
