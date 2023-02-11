@@ -22,17 +22,5 @@ jobs:
     - name: build source image
       run : |
         docker login -u ${{ secrets.DOCKER_REPO_USER }} -p ${{ secrets.DOCKER_REPO_PASSWORD }} workstation.thinkmay.net
-        docker build -f docker/Dockerfile.oneplay    . -t workstation.thinkmay.net/signaling:oneplay
-        docker build -f docker/Dockerfile.thinkshare . -t workstation.thinkmay.net/signaling:thinkshare
-
-        docker push workstation.thinkmay.net/signaling:thinkshare
-        docker push workstation.thinkmay.net/signaling:oneplay
-
-  CD:    
-    runs-on: ubuntu-latest
-    needs: [ "build" ]
-    steps:
-    - name: update via kubectl 
-      run : |
-        docker login -u ${{ secrets.DOCKER_REPO_USER }} -p ${{ secrets.DOCKER_REPO_PASSWORD }} workstation.thinkmay.net
-        docker run workstation.thinkmay.net/kubectl -n production rollout restart statefulset signaling
+        docker build -f docker/Dockerfile . -t workstation.thinkmay.net/signaling
+        docker push workstation.thinkmay.net/signaling
