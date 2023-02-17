@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	ValidationUrl := os.Getenv("VALIDATION_URL")
+	validationUrl := os.Getenv("VALIDATION_URL")
 	schema := os.Getenv("SCHEMA")
 
 	WebsocketPort := 8088
@@ -27,9 +27,9 @@ func main() {
 		} else if arg == "--grpc" {
 			GrpcPort, err = strconv.Atoi(args[i+1])
 		} else if arg == "--validationurl" {
-			ValidationUrl = args[i+1]
+			validationUrl = args[i+1]
 		} else if arg == "--schema" {
-			ValidationUrl = args[i+1]
+			schema = args[i+1]
 		} else if arg == "--help" {
 			fmt.Printf("--engine |  encode engine ()\n")
 			return
@@ -43,9 +43,9 @@ func main() {
 	valid := func() validator.Validator {
 		switch schema {
 		case "oneplay":
-			return oneplay.NewOneplayValidator(ValidationUrl)
+			return oneplay.NewOneplayValidator(validationUrl)
 		case "thinkshare":
-			return thinkshare.NewThinkshareValidator(ValidationUrl)
+			return thinkshare.NewThinkshareValidator(validationUrl)
 		default:
 			return nil;
 		}
