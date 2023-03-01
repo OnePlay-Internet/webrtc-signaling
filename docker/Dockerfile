@@ -14,7 +14,7 @@ EXPOSE 8088
 #grpc
 EXPOSE 8000
 
-RUN go build main.go
+RUN go build ./cmd/main.go
 
 ENV VALIDATION_URL "http://authenticator/token/challenge/session"
 ENV SCHEMA         "thinkshare"

@@ -6,9 +6,8 @@ import (
 	"strconv"
 
 	"github.com/pigeatgarlic/signaling/protocol"
-	signalling "github.com/pigeatgarlic/signaling/signaling"
+	"github.com/pigeatgarlic/signaling"
 	"github.com/pigeatgarlic/signaling/validator"
-	"github.com/pigeatgarlic/signaling/validator/oneplay"
 	"github.com/pigeatgarlic/signaling/validator/thinkshare"
 )
 
@@ -40,21 +39,20 @@ func main() {
 		fmt.Printf("faile to parse argument: %s\n", err.Error())
 		return
 	}
+
+	if schema == "" {
+		schema = "thinkshare"
+	}
+
 	valid := func() validator.Validator {
 		switch schema {
-		case "oneplay":
-			return oneplay.NewOneplayValidator(validationUrl)
 		case "thinkshare":
 			return thinkshare.NewThinkshareValidator(validationUrl)
 		default:
-			return nil;
+			return thinkshare.NewThinkshareValidator(validationUrl)
 		}
 	}()
 
-	if valid == nil {
-		fmt.Printf("unknown validator\n");
-		return;
-	}
 
 
 	signalling.InitSignallingServer(&protocol.SignalingConfig{
