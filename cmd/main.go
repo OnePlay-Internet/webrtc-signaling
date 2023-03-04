@@ -55,7 +55,7 @@ func main() {
 
 
 
-	signalling.InitSignallingServer(&protocol.SignalingConfig{
+	signaling.InitSignallingServer(&protocol.SignalingConfig{
 		WebsocketPort: WebsocketPort,
 		GrpcPort:      GrpcPort,
 	}, valid)

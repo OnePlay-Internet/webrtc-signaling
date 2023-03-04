@@ -1,7 +1,6 @@
 package ws
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -9,7 +8,6 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/pigeatgarlic/signaling/protocol"
-	"github.com/pigeatgarlic/webrtc-proxy/signalling/gRPC/packet"
 )
 
 var wsserver = WebSocketServer{}
@@ -22,84 +20,31 @@ func (server *WebSocketServer) OnTenant(fun protocol.OnTenantFunc) {
 	server.fun = fun
 }
 
-type WebsocketTenant struct {
-	exited  bool
-	conn    *websocket.Conn
-}
-
-func (tenant *WebsocketTenant) Send(pkt *packet.UserResponse) {
-	if pkt == nil {
-		return
-	}
-	data, err := json.Marshal(pkt)
-	if err != nil {
-		return
-	}
-	err = tenant.conn.WriteMessage(websocket.TextMessage, data)
-	if err != nil {
-		tenant.Exit()
-	}
-}
-
-func (tenant *WebsocketTenant) Receive() *packet.UserRequest {
-	msgt, data, err := tenant.conn.ReadMessage()
-	if err != nil {
-		tenant.Exit()
-		return nil
-	}
-	switch msgt {
-	case websocket.CloseMessage:
-		tenant.Exit()
-		return nil
-	case websocket.TextMessage:
-	}
-
-	var req packet.UserRequest
-	err = json.Unmarshal(data, &req)
-	if err != nil {
-		return nil
-	}
-	return &req
-}
-
-func (tenant *WebsocketTenant) Exit(){
-	fmt.Printf("websocket tenant closed\n");
-	tenant.conn.Close();
-	tenant.exited = true;
-}
-
-func (tenant *WebsocketTenant) IsExited() bool {
-	return tenant.exited
-}
 
 var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {return true},
+	CheckOrigin: func(r *http.Request) bool { return true },
 } // use default options
 
 func handle(w http.ResponseWriter, r *http.Request) {
-	var tenant *WebsocketTenant
 	c, err := upgrader.Upgrade(w, r, nil)
-	if err == nil {
-		token := strings.Split(r.URL.RawQuery, "=")[1]
-		tenant = &WebsocketTenant{
-			exited: false,
-			conn: c,
-		}
-		err := wsserver.fun(token, tenant)
-		if err != nil {
-			tenant.Exit()
-		}
-	}else {
-		fmt.Printf("%s\n",err.Error());
+	if err != nil {
+		fmt.Printf("%s\n", err.Error())
+		return
 	}
 
+	params := strings.Split(r.URL.RawQuery, "=");
+	if len(params) == 1 {
+		return 
+	}
 
+	tenant := NewWsTenant(c)
+	err = wsserver.fun(params[1], tenant)
+	if err != nil {
+		tenant.Exit()
+	}
 
-	for {
-		if tenant.IsExited() {
-			return
-		}
-		time.Sleep(10* time.Millisecond)
+	for { if tenant.IsExited() { return }
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 
