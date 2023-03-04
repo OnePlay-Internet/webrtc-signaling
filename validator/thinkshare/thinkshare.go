@@ -19,27 +19,27 @@ func NewThinkshareValidator(url string) validator.Validator {
 }
 
 type TokenReq struct {
-	Token string `json:"token"`
+	Queue []string `json:"queue"`
+}
+type TokenResp struct {
+	Queue []string `json:"queue"`
+	Route map[string]string `json:"route"`
 }
 
-func (val *ThinkshareValidator) Validate(token string) (result *validator.ValidationResult, err error) {
-	result = &validator.ValidationResult{}
-
-	buf, err := json.Marshal(TokenReq{Token: token})
+func (val *ThinkshareValidator) Validate(queue []string) (map[string]string, []string) {
+	buf,_ := json.Marshal(TokenReq{Queue: queue})
+	resp,err := http.Post(val.url, "application/json", bytes.NewBuffer(buf))
 	if err != nil {
-		return
+		return map[string]string{},queue
 	}
 
-	resp, err := http.Post(val.url, "application/json", bytes.NewBuffer(buf))
+	token_resp := &TokenResp{}
+	data := make([]byte, 10000)
+	n,err := resp.Body.Read(data)
 	if err != nil {
-		return
+		return map[string]string{},queue
 	}
 
-	data := make([]byte, 1000)
-	n,_ := resp.Body.Read(data)
-	err = json.Unmarshal(data[:n], result)
-	if err != nil {
-		return
-	}
-	return
+	json.Unmarshal(data[:n],token_resp);
+	return token_resp.Route,token_resp.Queue
 }
