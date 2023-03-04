@@ -14,7 +14,6 @@ import (
 
 type Signalling struct {
 	waitLine map[string]protocol.Tenant
-	pairs    map[int64]Pair
 	mut      *sync.Mutex
 
 	handlers  []protocol.ProtocolHandler
@@ -24,7 +23,6 @@ type Signalling struct {
 func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Validator) *Signalling {
 	signaling := Signalling {
 		waitLine : make(map[string]protocol.Tenant),
-		pairs : make(map[int64]Pair),
 		mut : &sync.Mutex{},
 		validator : provider,
 		handlers : []protocol.ProtocolHandler{
@@ -33,31 +31,8 @@ func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Val
 		},
 	}
 
-
-	go func() {
-		for {
-			var rev []int64
-			signaling.mut.Lock()
-			for index, pair := range signaling.pairs {
-				if pair.client.IsExited() {
-					pair.worker.Exit()
-					rev = append(rev, index)
-				} else if pair.worker.IsExited() {
-					pair.client.Exit()
-					rev = append(rev, index)
-				}
-			}
-			signaling.mut.Unlock()
-
-			for _, i := range rev {
-				signaling.removePair(i)
-			}
-
-			time.Sleep(100 * time.Millisecond)
-		}
-	}()
-
-	go func() {
+	
+	go func() { // remove exited tenant from waiting like
 		for {
 			var rev []string
 			signaling.mut.Lock()
@@ -73,7 +48,7 @@ func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Val
 			time.Sleep(100 * time.Millisecond)
 		}
 	}()
-	go func ()  {
+	go func ()  { // discard message from waiting like
 		for {
 			time.Sleep(100 * time.Millisecond)
 			for _,t := range signaling.waitLine {
@@ -84,7 +59,7 @@ func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Val
 		}
 	}()
 
-	for _, handler := range signaling.handlers {
+	for _, handler := range signaling.handlers { // handle new tenant
 		handler.OnTenant(func(token string, tent protocol.Tenant) error {
 			signaling.addTenant(token,tent) // add tenant to queue
 
@@ -103,12 +78,10 @@ func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Val
 			for k,v := range pairs {
 				pair := Pair {client: nil,worker: nil}
 				for _, v2 := range keys {
-					if v2 == k {
+					if v2 == k && pair.worker == nil{
 						pair.worker = signaling.waitLine[v2]
-						signaling.removeTenant(v2)
-					} else if v2 == v {
+					} else if v2 == v && pair.client == nil {
 						pair.client = signaling.waitLine[v2]
-						signaling.removeTenant(v2)
 					}
 				}
 
@@ -117,7 +90,6 @@ func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Val
 					continue
 				}
 
-				signaling.addPair(time.Now().UnixMicro(),pair)
 				pair.handlePair()
 			}
 
