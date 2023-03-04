@@ -11,10 +11,6 @@ import (
 	"github.com/pigeatgarlic/signaling/validator"
 )
 
-type Pair struct {
-	client protocol.Tenant
-	worker protocol.Tenant
-}
 
 type Signalling struct {
 	waitLine map[string]protocol.Tenant
@@ -56,7 +52,8 @@ func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Val
 			for _, i := range rev {
 				signaling.removePair(i)
 			}
-			time.Sleep(10 * time.Millisecond)
+
+			time.Sleep(100 * time.Millisecond)
 		}
 	}()
 
@@ -73,11 +70,12 @@ func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Val
 			for _, i := range rev {
 				signaling.removeTenant(i)
 			}
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
 		}
 	}()
 	go func ()  {
 		for {
+			time.Sleep(100 * time.Millisecond)
 			for _,t := range signaling.waitLine {
 				if t.Peek() {
 					_ = t.Receive() // discard
@@ -88,36 +86,29 @@ func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Val
 
 	for _, handler := range signaling.handlers {
 		handler.OnTenant(func(token string, tent protocol.Tenant) error {
-			signaling.addTenant(token,tent)
+			signaling.addTenant(token,tent) // add tenant to queue
 
+			// get all keys from current waiting line
 			keys := make([]string, 0, len(signaling.waitLine))
 			for k := range signaling.waitLine {
 				keys = append(keys, k)
 			}
 
+			// validate every tenant in queue
 			pairs,new_queue := signaling.validator.Validate(keys)
 
-			for _,k := range keys {
-				rm := true
-				for _,n := range new_queue {
-					if n == k {
-						rm = false
-					}
-				}
-
-				if rm {
-					delete(signaling.waitLine,k)
-				}
-			}
 
 
+			// move tenant from waiting line to pair queue
 			for k,v := range pairs {
 				pair := Pair {client: nil,worker: nil}
 				for _, v2 := range keys {
 					if v2 == k {
 						pair.worker = signaling.waitLine[v2]
+						signaling.removeTenant(v2)
 					} else if v2 == v {
 						pair.client = signaling.waitLine[v2]
+						signaling.removeTenant(v2)
 					}
 				}
 
@@ -127,6 +118,21 @@ func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Val
 				}
 
 				signaling.addPair(time.Now().UnixMicro(),pair)
+				pair.handlePair()
+			}
+
+			// remove tenant in old queue if not exist in new queue
+			for _,k := range keys {
+				rm := true
+				for _,n := range new_queue {
+					if n == k {
+						rm = false
+					}
+				}
+
+				if rm {
+					signaling.removeTenant(k)
+				}
 			}
 
 			return nil
@@ -137,18 +143,3 @@ func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Val
 }
 
 
-
-func (pair *Pair) handlePair() {
-	go func() {
-		for {
-			if pair.client.IsExited() || pair.worker.IsExited() { return }
-			pair.client.Send(pair.worker.Receive())
-		}
-	}()
-	go func() {
-		for {
-			if pair.client.IsExited() || pair.worker.IsExited() { return }
-			pair.worker.Send(pair.client.Receive())
-		}
-	}()
-}
