@@ -2,7 +2,7 @@ name: Signaling
 on:
   workflow_dispatch:
   push:
-    branch:
+    branches:
     - "master"
 
 jobs:
