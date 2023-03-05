@@ -22,5 +22,5 @@ jobs:
     - name: build source image
       run : |
         docker login -u ${{ secrets.DOCKER_REPO_USER }} -p ${{ secrets.DOCKER_REPO_PASSWORD }} workstation.thinkmay.net
-        docker build -f docker/Dockerfile . -t workstation.thinkmay.net/signaling
-        docker push workstation.thinkmay.net/signaling
+        docker build -f docker/Dockerfile . -t workstation.thinkmay.net/signaling:${{ steps.date.outputs.date }}
+        docker push workstation.thinkmay.net/signaling:${{ steps.date.outputs.date }}
