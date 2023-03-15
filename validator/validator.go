@@ -3,7 +3,7 @@ package validator
 type ValidationResult struct {
 	ID        int  `json:"id"`
 	IsServer  bool `json:"isServer"`
-	Recipient int `json:"recipient"`
+	Recipient string `json:"recipient"`
 }
 
 type Validator interface {
