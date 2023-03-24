@@ -1,7 +1,6 @@
 package signaling
 
-import "github.com/pigeatgarlic/signaling/protocol"
-
+import "github.com/thinkonmay/signaling-server/protocol"
 
 func (signaling *Signalling) removeTenant(s string) {
 	signaling.mut.Lock()

@@ -5,7 +5,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/pigeatgarlic/signaling/protocol"
+	"github.com/thinkonmay/signaling-server/protocol"
 	"github.com/thinkonmay/thinkremote-rtchub/signalling/gRPC/packet"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -50,7 +50,10 @@ func (server *GrpcServer) StreamRequest(client packet.Signaling_HandshakeServer)
 		tenant.Exit()
 	}
 
-	for { if tenant.IsExited() { return nil }
+	for {
+		if tenant.IsExited() {
+			return nil
+		}
 		time.Sleep(time.Millisecond)
 	}
 }

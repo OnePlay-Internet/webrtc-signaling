@@ -1,7 +1,7 @@
 package signaling
 
 import (
-	"github.com/pigeatgarlic/signaling/protocol"
+	"github.com/thinkonmay/signaling-server/protocol"
 	"github.com/thinkonmay/thinkremote-rtchub/signalling/gRPC/packet"
 )
 
@@ -13,8 +13,8 @@ type Pair struct {
 func (pair *Pair) handlePair() {
 	pair.worker.Send(&packet.SignalingMessage{
 		Type: packet.SignalingType_START,
-		Sdp: nil,
-		Ice: nil,
+		Sdp:  nil,
+		Ice:  nil,
 	})
 	go func() {
 		for {

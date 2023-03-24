@@ -5,9 +5,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/pigeatgarlic/signaling/protocol"
-	"github.com/pigeatgarlic/signaling"
-	"github.com/pigeatgarlic/signaling/validator"
+	"github.com/thinkonmay/signaling-server"
+	"github.com/thinkonmay/signaling-server/protocol"
 )
 
 func main() {
@@ -42,10 +41,6 @@ func main() {
 	if schema == "" {
 		schema = "thinkshare"
 	}
-
-
-
-
 
 	signaling.InitSignallingServer(&protocol.SignalingConfig{
 		WebsocketPort: WebsocketPort,

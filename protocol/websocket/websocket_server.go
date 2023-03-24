@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/pigeatgarlic/signaling/protocol"
+	"github.com/thinkonmay/signaling-server/protocol"
 )
 
 var wsserver = WebSocketServer{}
@@ -20,7 +20,6 @@ func (server *WebSocketServer) OnTenant(fun protocol.OnTenantFunc) {
 	server.fun = fun
 }
 
-
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 } // use default options
@@ -32,9 +31,9 @@ func handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := strings.Split(r.URL.RawQuery, "=");
+	params := strings.Split(r.URL.RawQuery, "=")
 	if len(params) == 1 {
-		return 
+		return
 	}
 
 	tenant := NewWsTenant(c)
@@ -43,7 +42,10 @@ func handle(w http.ResponseWriter, r *http.Request) {
 		tenant.Exit()
 	}
 
-	for { if tenant.IsExited() { return }
+	for {
+		if tenant.IsExited() {
+			return
+		}
 		time.Sleep(10 * time.Millisecond)
 	}
 }
