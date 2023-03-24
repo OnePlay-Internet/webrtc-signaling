@@ -1,4 +1,4 @@
-module github.com/pigeatgarlic/signaling
+module github.com/thinkonmay/signaling-server
 
 go 1.18
 
