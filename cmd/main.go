@@ -8,7 +8,6 @@ import (
 	"github.com/pigeatgarlic/signaling/protocol"
 	"github.com/pigeatgarlic/signaling"
 	"github.com/pigeatgarlic/signaling/validator"
-	"github.com/pigeatgarlic/signaling/validator/thinkshare"
 )
 
 func main() {
@@ -44,21 +43,14 @@ func main() {
 		schema = "thinkshare"
 	}
 
-	valid := func() validator.Validator {
-		switch schema {
-		case "thinkshare":
-			return thinkshare.NewThinkshareValidator(validationUrl)
-		default:
-			return thinkshare.NewThinkshareValidator(validationUrl)
-		}
-	}()
+
 
 
 
 	signaling.InitSignallingServer(&protocol.SignalingConfig{
 		WebsocketPort: WebsocketPort,
 		GrpcPort:      GrpcPort,
-	}, valid)
+	}, nil)
 
 	shutdown := make(chan bool)
 	shutdown <- true

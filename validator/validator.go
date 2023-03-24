@@ -1,5 +1,13 @@
 package validator
 
+
+
+type Pair struct {
+	PeerA string `json:"peerA"`
+	PeerB string `json:"peerB"`
+}
+
+
 type Validator interface {
-	Validate(queue []string) (map[string]string, []string)
+	Validate(queue []string) ([]Pair, []string)
 }
