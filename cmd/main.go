@@ -5,12 +5,14 @@ import (
 	"os"
 	"strconv"
 
+	// "github.com/pigeatgarlic/signaling/protocol"
 	"github.com/thinkonmay/signaling-server"
 	"github.com/thinkonmay/signaling-server/protocol"
+	// "github.com/pigeatgarlic/signaling/validator"
 )
 
 func main() {
-	validationUrl := os.Getenv("VALIDATION_URL")
+	// validationUrl := os.Getenv("VALIDATION_URL")
 	schema := os.Getenv("SCHEMA")
 
 	WebsocketPort := 8088
@@ -24,7 +26,7 @@ func main() {
 		} else if arg == "--grpc" {
 			GrpcPort, err = strconv.Atoi(args[i+1])
 		} else if arg == "--validationurl" {
-			validationUrl = args[i+1]
+			// validationUrl = args[i+1]
 		} else if arg == "--schema" {
 			schema = args[i+1]
 		} else if arg == "--help" {
@@ -41,6 +43,10 @@ func main() {
 	if schema == "" {
 		schema = "thinkshare"
 	}
+
+
+
+
 
 	signaling.InitSignallingServer(&protocol.SignalingConfig{
 		WebsocketPort: WebsocketPort,

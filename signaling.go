@@ -71,12 +71,12 @@ func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Val
 			pairs, new_queue := signaling.validator.Validate(keys)
 
 			// move tenant from waiting line to pair queue
-			for k, v := range pairs {
+			for _,v := range pairs {
 				pair := Pair{client: nil, worker: nil}
 				for _, v2 := range keys {
-					if v2 == k && pair.worker == nil {
+					if v2 == v.PeerA && pair.worker == nil {
 						pair.worker = signaling.waitLine[v2]
-					} else if v2 == v && pair.client == nil {
+					} else if v2 == v.PeerB && pair.client == nil {
 						pair.client = signaling.waitLine[v2]
 					}
 				}
