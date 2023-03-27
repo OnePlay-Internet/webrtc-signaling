@@ -12,7 +12,7 @@ type Pair struct {
 
 func (pair *Pair) handlePair() {
 	pair.worker.Send(&packet.SignalingMessage{
-		Type: packet.SignalingType_START,
+		Type: packet.SignalingType_tSTART,
 		Sdp:  nil,
 		Ice:  nil,
 	})
