@@ -33,7 +33,7 @@ func InitSignallingServer(conf *protocol.SignalingConfig) *GrpcServer {
 	return &ret
 }
 
-func (server *GrpcServer) StreamRequest(client packet.Signaling_HandshakeServer) error {
+func (server *GrpcServer) Handshake(client packet.Signaling_HandshakeServer) error {
 	md, ok := metadata.FromIncomingContext(client.Context())
 	if !ok {
 		return fmt.Errorf("Unauthorized")

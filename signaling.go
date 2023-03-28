@@ -1,6 +1,7 @@
 package signaling
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -36,6 +37,7 @@ func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Val
 			signaling.mut.Lock()
 			for index, wait := range signaling.waitLine {
 				if wait.IsExited() {
+					fmt.Printf("tenant exited\n")
 					rev = append(rev, index)
 				}
 			}
@@ -71,17 +73,17 @@ func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Val
 			pairs, new_queue := signaling.validator.Validate(keys)
 
 			// move tenant from waiting line to pair queue
-			for _,v := range pairs {
-				pair := Pair{client: nil, worker: nil}
+			for _, v := range pairs {
+				pair := Pair{A: nil, B: nil}
 				for _, v2 := range keys {
-					if v2 == v.PeerA && pair.worker == nil {
-						pair.worker = signaling.waitLine[v2]
-					} else if v2 == v.PeerB && pair.client == nil {
-						pair.client = signaling.waitLine[v2]
+					if v2 == v.PeerA && pair.B == nil {
+						pair.B = signaling.waitLine[v2]
+					} else if v2 == v.PeerB && pair.A == nil {
+						pair.A = signaling.waitLine[v2]
 					}
 				}
 
-				if pair.client == nil || pair.worker == nil {
+				if pair.A == nil || pair.B == nil {
 					continue
 				}
 
