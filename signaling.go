@@ -1,6 +1,7 @@
 package signaling
 
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -53,7 +54,8 @@ func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Val
 			time.Sleep(100 * time.Millisecond)
 			for _, t := range signaling.waitLine {
 				if t.Peek() {
-					_ = t.Receive() // discard
+					bytes,_ := json.Marshal(t.Receive())
+					fmt.Printf("discarded packet from waiting tenant: %s \n",string(bytes))
 				}
 			}
 		}

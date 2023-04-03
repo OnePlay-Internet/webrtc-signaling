@@ -1,6 +1,7 @@
 package signaling
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/thinkonmay/signaling-server/protocol"
@@ -13,6 +14,7 @@ type Pair struct {
 }
 
 func (pair *Pair) handlePair() {
+	fmt.Println("new pair")
 	pair.B.Send(&packet.SignalingMessage{
 		Type: packet.SignalingType_tSTART,
 		Sdp:  nil,
@@ -23,6 +25,7 @@ func (pair *Pair) handlePair() {
 		Sdp:  nil,
 		Ice:  nil,
 	})
+	fmt.Println("trigger done")
 
 
 	stop := make(chan bool,2)
@@ -33,9 +36,10 @@ func (pair *Pair) handlePair() {
 				stop<-true
 				return
 			}
-			if msg != nil {
-				pair.A.Send(msg)
-			}
+ 
+			bytes,_ := json.Marshal(msg)
+			fmt.Printf("sending packet from peerB to peerA : %s \n",string(bytes))
+			pair.A.Send(msg)
 		}
 	}()
 	go func() {
@@ -45,9 +49,10 @@ func (pair *Pair) handlePair() {
 				stop<-true
 				return
 			}
-			if msg != nil {
-				pair.B.Send(msg)
-			}
+
+			bytes,_ := json.Marshal(msg)
+			fmt.Printf("sending packet from peerA to peerB : %s \n",string(bytes))
+			pair.B.Send(msg)
 		}
 	}()
 	go func() {
