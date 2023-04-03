@@ -1,6 +1,10 @@
 package grpc
 
-import "github.com/thinkonmay/thinkremote-rtchub/signalling/gRPC/packet"
+import (
+	"fmt"
+
+	"github.com/thinkonmay/thinkremote-rtchub/signalling/gRPC/packet"
+)
 
 type GrpcTenant struct {
 	exited bool
@@ -53,6 +57,8 @@ func (tenant *GrpcTenant) IsExited() bool {
 }
 
 func (tenant *GrpcTenant) Exit() {
+	fmt.Printf("grpc tenant closed\n")
+	tenant.pending <- nil
 	tenant.exited = true
 }
 

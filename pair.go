@@ -29,7 +29,7 @@ func (pair *Pair) handlePair() {
 	go func() {
 		for {
 			msg := pair.B.Receive()
-			if pair.A.IsExited() || pair.B.IsExited() {
+			if pair.A.IsExited() || pair.B.IsExited() || msg == nil{
 				stop<-true
 				return
 			}
@@ -41,7 +41,7 @@ func (pair *Pair) handlePair() {
 	go func() {
 		for {
 			msg := pair.A.Receive()
-			if pair.A.IsExited() || pair.B.IsExited() {
+			if pair.A.IsExited() || pair.B.IsExited() || msg == nil{
 				stop<-true
 				return
 			}

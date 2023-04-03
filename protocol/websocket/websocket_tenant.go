@@ -68,6 +68,7 @@ func (tenant *WebsocketTenant) Peek() bool {
 
 func (tenant *WebsocketTenant) Exit() {
 	fmt.Printf("websocket tenant closed\n")
+	tenant.pending<-nil
 	tenant.conn.Close()
 	tenant.exited = true
 }
