@@ -52,6 +52,10 @@ func handle(w http.ResponseWriter, r *http.Request) {
 
 func InitSignallingWs(conf *protocol.SignalingConfig) *WebSocketServer {
 	http.HandleFunc("/api/handshake", handle)
-	go http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", conf.WebsocketPort), nil)
+	if conf.KeyFile != "" && conf.CertFile != "" {
+		go http.ListenAndServeTLS(fmt.Sprintf("0.0.0.0:%d", conf.WebsocketPort),conf.CertFile,conf.KeyFile, nil)
+	} else {
+		go http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", conf.WebsocketPort), nil)
+	}
 	return &wsserver
 }

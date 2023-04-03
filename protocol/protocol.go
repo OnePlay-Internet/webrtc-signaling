@@ -19,5 +19,9 @@ type ProtocolHandler interface {
 
 type SignalingConfig struct {
 	WebsocketPort int
+	CertFile string
+	KeyFile  string
+
+
 	GrpcPort      int
 }
