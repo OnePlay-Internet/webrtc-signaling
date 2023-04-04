@@ -1,15 +1,17 @@
-package protocol 
+package protocol
 
-import "github.com/pigeatgarlic/webrtc-proxy/signalling/gRPC/packet"
+import "github.com/thinkonmay/thinkremote-rtchub/signalling/gRPC/packet"
 
 type Tenant interface {
-	Send(*packet.UserResponse)
-	Receive()*packet.UserRequest
+	Send(*packet.SignalingMessage)
+	Receive() *packet.SignalingMessage
+	Peek() bool
+
 	IsExited() bool
 	Exit()
 }
 
-type OnTenantFunc func(token string, tent Tenant) (error)
+type OnTenantFunc func(token string, tent Tenant) error
 
 type ProtocolHandler interface {
 	OnTenant(fun OnTenantFunc)
@@ -17,5 +19,9 @@ type ProtocolHandler interface {
 
 type SignalingConfig struct {
 	WebsocketPort int
+	CertFile string
+	KeyFile  string
+
+
 	GrpcPort      int
 }

@@ -1,11 +1,13 @@
 package validator
 
-type ValidationResult struct {
-	ID        int  `json:"id"`
-	IsServer  bool `json:"isServer"`
-	Recipient string `json:"recipient"`
+
+
+type Pair struct {
+	PeerA string `json:"peerA"`
+	PeerB string `json:"peerB"`
 }
 
+
 type Validator interface {
-	Validate(token string) (*ValidationResult, error)
+	Validate(queue []string) ([]Pair, []string)
 }

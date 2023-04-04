@@ -1,64 +1,30 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"strconv"
+	// "github.com/pigeatgarlic/signaling/protocol"
+	"github.com/thinkonmay/signaling-server"
+	"github.com/thinkonmay/signaling-server/protocol"
+	"github.com/thinkonmay/signaling-server/validator/sbvalidator"
+	// "github.com/pigeatgarlic/signaling/validator"
+)
 
-	"github.com/pigeatgarlic/signaling/protocol"
-	"github.com/pigeatgarlic/signaling"
-	"github.com/pigeatgarlic/signaling/validator"
-	"github.com/pigeatgarlic/signaling/validator/thinkshare"
+const (
+	default_signaling_grpc_port = 4000
+	default_signaling_ws_port = 8080
+	signaling_validate_url = "https://kczvtfaouddunjtxcemk.functions.supabase.co/signaling_authenticate"
+	local_anon_key         = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjenZ0ZmFvdWRkdW5qdHhjZW1rIiwicm9sZSI6ImFub24iLCJpYXQiOjE2Nzk1NDc0MTcsImV4cCI6MTk5NTEyMzQxN30.dJqF_ipAx8NF_P__tsR-KkghVSc2McQo8B3MxeEup58"
 )
 
 func main() {
-	validationUrl := os.Getenv("VALIDATION_URL")
-	schema := os.Getenv("SCHEMA")
-
-	WebsocketPort := 8088
-	GrpcPort := 8000
-
-	var err error
-	args := os.Args[1:]
-	for i, arg := range args {
-		if arg == "--websocket" {
-			WebsocketPort, err = strconv.Atoi(args[i+1])
-		} else if arg == "--grpc" {
-			GrpcPort, err = strconv.Atoi(args[i+1])
-		} else if arg == "--validationurl" {
-			validationUrl = args[i+1]
-		} else if arg == "--schema" {
-			schema = args[i+1]
-		} else if arg == "--help" {
-			fmt.Printf("--engine |  encode engine ()\n")
-			return
-		}
-	}
-
-	if err != nil {
-		fmt.Printf("faile to parse argument: %s\n", err.Error())
-		return
-	}
-
-	if schema == "" {
-		schema = "thinkshare"
-	}
-
-	valid := func() validator.Validator {
-		switch schema {
-		case "thinkshare":
-			return thinkshare.NewThinkshareValidator(validationUrl)
-		default:
-			return thinkshare.NewThinkshareValidator(validationUrl)
-		}
-	}()
 
 
 
-	signalling.InitSignallingServer(&protocol.SignalingConfig{
-		WebsocketPort: WebsocketPort,
-		GrpcPort:      GrpcPort,
-	}, valid)
+	signaling.InitSignallingServer(&protocol.SignalingConfig{
+		WebsocketPort: default_signaling_ws_port,
+		GrpcPort:      default_signaling_grpc_port,
+	}, sbvalidator.NewSbValidator(signaling_validate_url,local_anon_key))
+
+
 
 	shutdown := make(chan bool)
 	shutdown <- true
