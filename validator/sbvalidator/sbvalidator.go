@@ -45,9 +45,13 @@ func (val *SbValidator) Validate(queue []string) ([]validator.Pair, []string) {
 
 	token_resp := &TokenResp{
 		Pairs: []validator.Pair{},
+		Queue: []string{},
 	}
 
 	data, err := io.ReadAll(resp.Body)
+	fmt.Printf("result : %s\n",string(data))
+
+
 	if err != nil {
 		fmt.Printf("%s\n",err.Error())
 		return []validator.Pair{}, queue
