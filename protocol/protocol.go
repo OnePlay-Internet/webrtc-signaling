@@ -16,12 +16,3 @@ type OnTenantFunc func(token string, tent Tenant) error
 type ProtocolHandler interface {
 	OnTenant(fun OnTenantFunc)
 }
-
-type SignalingConfig struct {
-	WebsocketPort int
-	CertFile string
-	KeyFile  string
-
-
-	GrpcPort      int
-}

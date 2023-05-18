@@ -6,9 +6,6 @@ import (
 	"sync"
 	"time"
 
-	grpc "github.com/thinkonmay/signaling-server/protocol/gRPC"
-	ws "github.com/thinkonmay/signaling-server/protocol/websocket"
-
 	"github.com/thinkonmay/signaling-server/protocol"
 	"github.com/thinkonmay/signaling-server/validator"
 )
@@ -21,15 +18,14 @@ type Signalling struct {
 	validator validator.Validator
 }
 
-func InitSignallingServer(conf *protocol.SignalingConfig, provider validator.Validator) *Signalling {
+func InitSignallingServer(handlers []protocol.ProtocolHandler, 
+						  provider validator.Validator,
+						  ) *Signalling {
 	signaling := Signalling{
 		waitLine:  make(map[string]protocol.Tenant),
 		mut:       &sync.Mutex{},
 		validator: provider,
-		handlers: []protocol.ProtocolHandler{
-			grpc.InitSignallingServer(conf),
-			ws.InitSignallingWs(conf),
-		},
+		handlers:  handlers,
 	}
 
 	go func() { // remove exited tenant from waiting like

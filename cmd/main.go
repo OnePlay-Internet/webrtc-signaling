@@ -1,11 +1,11 @@
 package main
 
 import (
-	// "github.com/pigeatgarlic/signaling/protocol"
 	"github.com/thinkonmay/signaling-server"
 	"github.com/thinkonmay/signaling-server/protocol"
+	grpc "github.com/thinkonmay/signaling-server/protocol/gRPC"
+	"github.com/thinkonmay/signaling-server/protocol/websocket"
 	"github.com/thinkonmay/signaling-server/validator/sbvalidator"
-	// "github.com/pigeatgarlic/signaling/validator"
 )
 
 const (
@@ -16,13 +16,13 @@ const (
 )
 
 func main() {
+	handlers := []protocol.ProtocolHandler{
+		grpc.InitSignallingServer(5000),
+		ws.InitSignallingWs(10),
+	}
 
-
-
-	signaling.InitSignallingServer(&protocol.SignalingConfig{
-		WebsocketPort: default_signaling_ws_port,
-		GrpcPort:      default_signaling_grpc_port,
-	}, sbvalidator.NewSbValidator(signaling_validate_url,local_anon_key))
+	signaling.InitSignallingServer(handlers, 
+		sbvalidator.NewSbValidator(signaling_validate_url,local_anon_key))
 
 
 

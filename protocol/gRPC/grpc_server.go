@@ -21,12 +21,13 @@ func (server *GrpcServer) OnTenant(fun protocol.OnTenantFunc) {
 	server.fun = fun
 }
 
-func InitSignallingServer(conf *protocol.SignalingConfig) *GrpcServer {
+func InitSignallingServer(port int) *GrpcServer {
 	var ret GrpcServer
-	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", conf.GrpcPort))
+	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", port))
 	if err != nil {
 		panic(err)
 	}
+
 	ret.grpcServer = grpc.NewServer()
 	packet.RegisterSignalingServer(ret.grpcServer, &ret)
 	go ret.grpcServer.Serve(lis)

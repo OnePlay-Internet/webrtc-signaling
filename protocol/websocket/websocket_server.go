@@ -24,7 +24,7 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 } // use default options
 
-func handle(w http.ResponseWriter, r *http.Request) {
+func HandleWebsocketSignaling(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Printf("%s\n", err.Error())
@@ -50,12 +50,8 @@ func handle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func InitSignallingWs(conf *protocol.SignalingConfig) *WebSocketServer {
-	http.HandleFunc("/api/handshake", handle)
-	if conf.KeyFile != "" && conf.CertFile != "" {
-		go http.ListenAndServeTLS(fmt.Sprintf("0.0.0.0:%d", conf.WebsocketPort),conf.CertFile,conf.KeyFile, nil)
-	} else {
-		go http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", conf.WebsocketPort), nil)
-	}
+func InitSignallingWs(port int) *WebSocketServer {
+	http.HandleFunc("/api/handshake", HandleWebsocketSignaling)
+	go http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), nil)
 	return &wsserver
 }
