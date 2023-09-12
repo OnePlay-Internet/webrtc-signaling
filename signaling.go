@@ -48,12 +48,14 @@ func InitSignallingServer(handlers []protocol.ProtocolHandler,
 	go func() { // discard message from waiting like
 		for {
 			time.Sleep(100 * time.Millisecond)
+			signaling.mut.Lock()
 			for _, t := range signaling.waitLine {
 				if t.Peek() {
 					bytes,_ := json.Marshal(t.Receive())
 					fmt.Printf("discarded packet from waiting tenant: %s \n",string(bytes))
 				}
 			}
+			signaling.mut.Unlock()
 		}
 	}()
 
